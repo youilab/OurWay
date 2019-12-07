@@ -4,61 +4,53 @@ from flask_restful import Resource, Api
 from sqlalchemy import create_engine
 from json import dumps
 
+import mysql.connector
+
+conn = mysql.connector.connect(user='root', password='mrHDEZ93.',
+                              host='127.0.0.1',
+                              database='OurWay')
+
 db_connect = create_engine('sqlite:///chinook.db')
 app = Flask(__name__)
 api = Api(app)
 
 
-class Employees(Resource):
+class Rutas(Resource):
     def get(self):
-        conn = db_connect.connect() # connect to database
-        query = conn.execute("select * from employees") # This line performs query and returns json result
-        return {'employees': [i[0] for i in query.cursor.fetchall()]} # Fetches first column that is Employee ID
+        conn = mysql.connector.connect(user='root', password='mrHDEZ93.', host='127.0.0.1', database='OurWay')
+        cursor = conn.cursor()
+        cursor.execute("select * from Rutas;")
+        rutas = []
+        for (ID, URL, NOMBRE) in cursor:
+            rutas.append({"id": ID, "url": URL, "nombre": NOMBRE})
+        conn.close()
+        return str(rutas)
     
-    def post(self):
-        conn = db_connect.connect()
-        print(request.json)
-        LastName = request.json['LastName']
-        FirstName = request.json['FirstName']
-        Title = request.json['Title']
-        ReportsTo = request.json['ReportsTo']
-        BirthDate = request.json['BirthDate']
-        HireDate = request.json['HireDate']
-        Address = request.json['Address']
-        City = request.json['City']
-        State = request.json['State']
-        Country = request.json['Country']
-        PostalCode = request.json['PostalCode']
-        Phone = request.json['Phone']
-        Fax = request.json['Fax']
-        Email = request.json['Email']
-        query = conn.execute("insert into employees values(null,'{0}','{1}','{2}','{3}', \
-                             '{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}', \
-                             '{13}')".format(LastName,FirstName,Title,
-                             ReportsTo, BirthDate, HireDate, Address,
-                             City, State, Country, PostalCode, Phone, Fax,
-                             Email))
-        return {'status':'success'}
-
     
-class Tracks(Resource):
+class Ubicaciones(Resource):
     def get(self):
-        conn = db_connect.connect()
-        query = conn.execute("select trackid, name, composer, unitprice from tracks;")
-        result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
-        return jsonify(result)
+        conn = mysql.connector.connect(user='root', password='mrHDEZ93.', host='127.0.0.1', database='OurWay')
+        cursor = conn.cursor()
+        cursor.execute("select * from Ubicaciones, Ruta_Ubicaciones where ID_UBICACIONES = Ubicaciones.ID;")
+        rutas = []
+        for (LATITUDE, LONGITUDE, TIMESTAMP) in cursor:
+            rutas.append({"lat": LATITUDE, "lng": LONGITUDE, "timestamp": TIMESTAMP})
+        conn.close()
+        return str(rutas)
+    
 
     
 class Employees_Name(Resource):
     def get(self, employee_id):
-        conn = db_connect.connect()
+        conn = mysql.connector.connect(user='root', password='mrHDEZ93.', host='127.0.0.1', database='OurWay')
         query = conn.execute("select * from employees where EmployeeId =%d "  %int(employee_id))
         result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
+        conn.close()
         return jsonify(result)
 
 
-api.add_resource(Employees, '/employees') # Route_1
-api.add_resource(Tracks, '/tracks') # Route_2
+api.add_resource(Rutas, '/rutas') # Route_1
+api.add_resource(Ubicaciones, '/ubicaciones') # Route_2
 api.add_resource(Employees_Name, '/employees/<employee_id>') # Route_3
 
 
